@@ -82,12 +82,12 @@ public class NodeHandler extends NodeCallback {
             logger.debug((NodeAttachment)getNodeData(index));
         }
         
-        //markMigratableNodes (  allLeafs);
+        markMigratableNodes (  allLeafs);
         return allLeafs;
     }
     
      
-    /*
+    
     private void markMigratableNodes (List<NodeAttachment> allleafs) throws IloException{
         List<String> exclusionList = Arrays.asList("Node25", "Node23", "Node24","Node13", "Node29", "Node30");
         long numLeafs = getNremainingNodes64();
@@ -97,7 +97,7 @@ public class NodeHandler extends NodeCallback {
             if ( exclusionList.contains(node.nodeID) ) node.isMigrateable = false;
             logger.info(node);
         }
-    }*/
+    }
     
     
 }

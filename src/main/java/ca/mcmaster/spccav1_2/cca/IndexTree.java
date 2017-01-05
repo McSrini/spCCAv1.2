@@ -7,16 +7,24 @@ package ca.mcmaster.spccav1_2.cca;
 
 import static ca.mcmaster.spccav1_2.Driver.*;
 import static ca.mcmaster.spccav1_2.Driver.ZERO;
+import ca.mcmaster.spccav1_2.cplex.callbacks.BranchHandler;
 import ca.mcmaster.spccav1_2.cplex.datatypes.BranchingInstruction;
 import ca.mcmaster.spccav1_2.cplex.datatypes.NodeAttachment;
+import static java.lang.System.exit;
 import java.util.*;
 import java.util.Map;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
+import org.apache.log4j.RollingFileAppender;
 
 /**
  *
  * @author tamvadss
  */
 public class IndexTree {
+    
+    private static Logger logger=Logger.getLogger(IndexTree.class);
     
     //every time an index tree is constructed on a partition, we prepare these maps which serve as indices
     public static Map<String,NodeAttachment > solutionTreeNodeMap = new HashMap<String,NodeAttachment> ();
@@ -28,11 +36,23 @@ public class IndexTree {
     
     private List<NodeAttachment> allLeafNodes;
     
+    static {
+        logger.setLevel(Level.OFF);
+        PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
+        try {
+            logger.addAppender(new  RollingFileAppender(layout,LOG_FOLDER+IndexTree.class.getSimpleName()+ LOG_FILE_EXTENSION));
+            logger.setAdditivity(false);
+        } catch (Exception ex) {
+            exit(1);
+        }
+          
+    }
+    
     public IndexTree (List<NodeAttachment> allLeafNodes ) {
         this.allLeafNodes= allLeafNodes;
         prepareIndexMaps();
         
-        subtreeRoot = new IndexNode(   allLeafNodes, ZERO, EMPTY_STRING+-ONE, null);
+        subtreeRoot = new IndexNode(   allLeafNodes, ZERO, EMPTY_STRING+-ONE);
         
     }
     
@@ -43,49 +63,87 @@ public class IndexTree {
     //return the CCA subtrees found  
     public List<IndexNode> getCCANodes () {
         List<IndexNode> ccaList =  this.subtreeRoot.getCCATrees();
-        for (IndexNode node: ccaList) {
-            setNumberOfNodeLPsRequiredToConstructAllLeafs(node);
-        }
+         
         return ccaList;
     }
     
-   
-    //this number , when multiplied by average node LP solve time, should be much less than expected solution time of CCA node
-    private void setNumberOfNodeLPsRequiredToConstructAllLeafs(IndexNode ccaNode){
-        //move up from every leaf towards CCA node, and count the number of 
-        //unique node IDs encountered along the way, including the CCA node itself
-        //
-        //Be careful of the case when the CCA node is itself a leaf, in which case no need to solve any node LPs
+    //find the CCA node by climbing up from every leaf.
+    //The last leaf which encounters an ancestor with ref count = # of leafs is the CCA
+    public IndexNode getCCANode  (List<String> selectedLeafNodeIDs) {
+        NodeAttachment ccaNode  =null;
+        int selectedLeafCount = selectedLeafNodeIDs.size();
         
-        ccaNode.numNodeLPsToSolveToArriveAtLeafs = ZERO ;
+        if (selectedLeafCount<TWO) {
+            logger.error( "At least 2 leafs must be selected to find CCA.");
+            exit(4);
+        }
         
-        if (ccaNode.leafNodesToTheLeft.size() + ccaNode.leafNodesToTheRight.size() > ZERO){
+        Map<String, Integer> refCountMap = new HashMap<String, Integer>();
+        
+        for (int index = ZERO; index < selectedLeafCount; index ++){
             
-            Map<String, Integer> uniqueNodeMap = new HashMap<String, Integer>();
+            String thisLeafID = selectedLeafNodeIDs.get(index);            
+            NodeAttachment node = solutionTreeNodeMap.get( thisLeafID);
+            //
+            //climb up
+            NodeAttachment parentNode = node.parentData;
+            while (parentNode!=null) {                
+                if (refCountMap.containsKey( parentNode.nodeID)){
+                    int value = refCountMap.get( parentNode.nodeID);
+                    refCountMap.put(parentNode.nodeID, value+ONE);
+                    
+                    if ((index==selectedLeafCount-ONE) && (value+ONE==selectedLeafCount)) {
+                        ccaNode  = parentNode;
+                        break; //we have found the CCA node
+                    }
+                    
+                }else {
+                    refCountMap.put(parentNode.nodeID, ONE);
+                }
+                node = parentNode;
+                parentNode = node.parentData;                
+            }
             
-            for (NodeAttachment node : ccaNode.leafNodesToTheLeft) {
-                NodeAttachment thisNode = node;
-                NodeAttachment parentNode = node.parentData;
-                while (!thisNode.nodeID.equals( ccaNode.nodeID)){
-                    uniqueNodeMap.put(parentNode.nodeID, ONE);
-                    thisNode = parentNode;
-                    parentNode = thisNode.parentData;
-                }
-            }
-            for (NodeAttachment node : ccaNode.leafNodesToTheRight) {
-                NodeAttachment thisNode = node;
-                NodeAttachment parentNode = node.parentData;
-                while (!thisNode.nodeID.equals( ccaNode.nodeID)){
-                    uniqueNodeMap.put(parentNode.nodeID, ONE);
-                    thisNode = parentNode;
-                    parentNode = thisNode.parentData;
-                }
-            }
-             
-            ccaNode.numNodeLPsToSolveToArriveAtLeafs =uniqueNodeMap.keySet().size();
-        } 
+        }
         
+        return getIndexNodeFromNodeAttachment(ccaNode) ;
     }
+    
+        
+    public static List<BranchingInstruction> getCumulativeBranchingInstructions(String nodeID){
+        List<BranchingInstruction> cumulativeBranchingInstructions = new ArrayList<BranchingInstruction>  ();
+        
+        NodeAttachment thisNode = IndexTree.solutionTreeNodeMap.get( nodeID);
+        NodeAttachment parent = thisNode.parentData;
+        while (parent !=null) {
+            //check if right child, and get the branching instruction
+            if (parent.leftChildNodeID.equals(nodeID)){
+                cumulativeBranchingInstructions.add( parent.branchingInstructionForLeftChild);
+            }else {
+                cumulativeBranchingInstructions.add( parent.branchingInstructionForRightChild);
+            }
+            
+            //climb up
+             thisNode = thisNode.parentData ; 
+             parent = thisNode.parentData;
+              
+        }
+        
+        return cumulativeBranchingInstructions;
+    }
+    
+    //convert the node attachment of a CCA node into an indexnode
+    private  IndexNode getIndexNodeFromNodeAttachment ( NodeAttachment ccaNodeAttachment){
+        IndexNode result = new IndexNode( this.getLeafNodesUnderMe( ccaNodeAttachment.nodeID   ), ccaNodeAttachment.depthFromSubtreeRoot ,   ccaNodeAttachment.nodeID  );
+        result.isCCA= true;
+        //populate cumulative branching instructions
+        result.cumulativeBranchingInstructions=getCumulativeBranchingInstructions(ccaNodeAttachment.nodeID);
+        result.setNumberOfNodeLPsRequiredToConstructAllLeafs();                
+                        
+        return result;
+    }
+    
+ 
     
     private   void prepareIndexMaps () {
         
@@ -123,6 +181,24 @@ public class IndexTree {
         solutionTreeNodeMap.put(subtreeRoot.nodeID, subtreeRoot );
         parentsMap.put(subtreeRoot.nodeID, null);
             
+    }
+    
+    //get all leaf nodes under a node ID
+    //Assumes argument is itself not a leaf
+    private List<NodeAttachment> getLeafNodesUnderMe(String nodeID){
+        List<NodeAttachment> result = new ArrayList<NodeAttachment>();
+        
+        NodeAttachment thisNode = solutionTreeNodeMap.get(nodeID );
+        if (thisNode.leftChildNodeID !=null) {
+            NodeAttachment leftChild = solutionTreeNodeMap.get( thisNode.leftChildNodeID );
+            if (leftChild.isLeaf()) result.add(leftChild); else result.addAll(getLeafNodesUnderMe( leftChild.nodeID));
+        }
+        if (thisNode.rightChildNodeID !=null) {
+            NodeAttachment rightChild = solutionTreeNodeMap.get( thisNode.rightChildNodeID );
+            if (rightChild.isLeaf()) result.add(rightChild); else result.addAll(getLeafNodesUnderMe( rightChild.nodeID));
+        }
+        
+        return result;
     }
     
 }

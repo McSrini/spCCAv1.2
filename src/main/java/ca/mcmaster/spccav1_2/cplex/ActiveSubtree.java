@@ -49,11 +49,23 @@ public class ActiveSubtree {
         indexTree.splitToCCA();
         return indexTree.getCCANodes();
     }
+    
+    public IndexNode getCCANode  (List<String> selectedLeafNodeIDs) {
+        return this.indexTree.getCCANode(selectedLeafNodeIDs);
+    }
+    
   
     public void solve() throws IloException{
-        //cplex.setParam( IloCplex.Param.MIP.Strategy.Backtrack,  ZERO); 
+        cplex.setParam( IloCplex.Param.MIP.Strategy.Backtrack,  ZERO); 
         cplex.solve();
         this.indexTree = nodeHandler.indexTree;
+    }
+        
+    public void solveFor2Min() throws IloException{
+       //cplex.setParam( IloCplex.Param.MIP.Strategy.Backtrack,  ZERO); 
+        cplex.setParam(IloCplex.Param.TimeLimit, TWO*SIXTY); 
+        cplex.solve();
+     
     }
     
     public int getNumBranches () {
@@ -91,12 +103,7 @@ public class ActiveSubtree {
         this.branchHandler.cutoff=cutoff;
     }
     
-    public void solveFor2Min() throws IloException{
-       //cplex.setParam( IloCplex.Param.MIP.Strategy.Backtrack,  ZERO); 
-        cplex.setParam(IloCplex.Param.TimeLimit, TWO*SIXTY); 
-        cplex.solve();
-     
-    }
+
         
     public boolean isOptimal () throws IloException {
         return this.cplex.getStatus().equals(IloCplex.Status.Optimal);

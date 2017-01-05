@@ -40,14 +40,18 @@ public class NodeAttachment {
     public String toString(){
         String result = EMPTY_STRING;
         result += "NodeID "+ nodeID;
-        result += isMigrateable? "Mig":"Un";
-         result += "\n";
-         for (Boolean isRight: isRightChildCumulative ) {
-             result +=  isRight? "R":"L";
-         }
+        result += isMigrateable? " Mig":" Un";
+        result += " ";
+        for (Boolean isRight: isRightChildCumulative ) {
+            result +=  isRight? "R":"L";
+        }
           
         result += "\n";
         return result;
+    }
+    
+    public boolean isLeaf() {
+        return rightChildNodeID == null && leftChildNodeID == null; 
     }
   
 }

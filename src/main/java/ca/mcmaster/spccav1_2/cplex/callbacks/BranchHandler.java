@@ -123,7 +123,7 @@ public class BranchHandler extends BranchCallback {
         thisChild.parentData = parentNodeData;
         thisChild.depthFromSubtreeRoot=parentNodeData.depthFromSubtreeRoot + ONE;
         
-        thisChild.isMigrateable= rand.nextBoolean() || rand.nextBoolean();
+        //thisChild.isMigrateable= rand.nextBoolean() || rand.nextBoolean();
      
         //0 or false indicates L
         thisChild.isRightChildCumulative.addAll( parentNodeData.isRightChildCumulative);

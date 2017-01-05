@@ -9,7 +9,9 @@ import static ca.mcmaster.spccav1_2.Driver.*;
 import ca.mcmaster.spccav1_2.cplex.datatypes.*;
 import ca.mcmaster.spccav1_2.cplex.datatypes.NodeAttachment;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -27,7 +29,7 @@ public class IndexNode {
     public String nodeID = EMPTY_STRING + -ONE; //default for subtree root 
     public int depthFromSubtreeRoot = ZERO;
     
-    public IndexNode leftChild =null, rightChild =null, parent = null ; 
+    public IndexNode leftChild =null, rightChild =null;//, parent = null ; 
     
     public List<NodeAttachment> migratableLeafNodesToTheLeft = new ArrayList<NodeAttachment>();
     public List<NodeAttachment> migrateableLeafNodesToTheRight = new ArrayList<NodeAttachment>();
@@ -40,16 +42,16 @@ public class IndexNode {
     public List <BranchingInstruction> cumulativeBranchingInstructions = new ArrayList <BranchingInstruction>();
          
     
-    public   IndexNode(  List<NodeAttachment> allLeafNodes , int depthFromSubtreeRoot, String nodeID , IndexNode parent){
+    public   IndexNode(  List<NodeAttachment> leafNodesUnderMe , int depthFromSubtreeRoot, String nodeID /*, IndexNode parent*/){
         this. depthFromSubtreeRoot=   depthFromSubtreeRoot;
         this.nodeID=nodeID;
-        this.parent = parent;
+        //this.parent = parent; parent of index node not needed
         //no children at creation time
          
         //populate leafs to the left and right
-        for (NodeAttachment leafNode : allLeafNodes) {
+        for (NodeAttachment leafNode : leafNodesUnderMe) {
             
-            if (   this.nodeID.equals(leafNode.nodeID )  && allLeafNodes.size()==ONE){
+            if (   this.nodeID.equals(leafNode.nodeID )  && leafNodesUnderMe.size()==ONE){
                 //  this index-node is itself a leaf, no kids
                 isLeaf = true;
             } else{
@@ -90,13 +92,13 @@ public class IndexNode {
         if (isSplitNeeded) {
             if (this.migratableLeafNodesToTheLeft.size()>ZERO) {
                 //create left subtree
-                this.leftChild = new IndexNode(this.leafNodesToTheLeft, ONE + this.depthFromSubtreeRoot,  IndexTree.leftChildMap.get( this.nodeID) ,  this);
+                this.leftChild = new IndexNode(this.leafNodesToTheLeft, ONE + this.depthFromSubtreeRoot,  IndexTree.leftChildMap.get( this.nodeID)  );
                 //recursive call
                 this.leftChild.splitToCCA();
             }
             if (this.migrateableLeafNodesToTheRight.size()>ZERO) {
                 //create right sub tree
-                this.rightChild = new IndexNode(this.leafNodesToTheRight, ONE + this.depthFromSubtreeRoot, IndexTree.rightChildMap.get( this.nodeID) ,  this);
+                this.rightChild = new IndexNode(this.leafNodesToTheRight, ONE + this.depthFromSubtreeRoot, IndexTree.rightChildMap.get( this.nodeID) );
                 //recursive call
                 this.rightChild.splitToCCA();
             }
@@ -110,7 +112,8 @@ public class IndexNode {
             //if marked CCA, populate cumulative branching instructions needed to create this CCA node
             if (isCCA) {
                 //populate cumulative branching instructions
-                this.cumulativeBranchingInstructions= getCumulativeBranchingInstructions(this.nodeID)  ;
+                this.cumulativeBranchingInstructions= IndexTree.getCumulativeBranchingInstructions(this.nodeID)  ;
+                this.setNumberOfNodeLPsRequiredToConstructAllLeafs();
             }
         }
          
@@ -161,26 +164,41 @@ public class IndexNode {
         return result;
     }
     
-    private List<BranchingInstruction> getCumulativeBranchingInstructions(String nodeID){
-        List<BranchingInstruction> cumulativeBranchingInstructions = new ArrayList<BranchingInstruction>  ();
+    //this number , when multiplied by average node LP solve time, should be much less than expected solution time of CCA node
+    public void setNumberOfNodeLPsRequiredToConstructAllLeafs( ){
+        //move up from every leaf towards CCA node, and count the number of 
+        //unique node IDs encountered along the way, including the CCA node itself
+        //
+        //Be careful of the case when the CCA node is itself a leaf, in which case no need to solve any node LPs
         
-        NodeAttachment thisNode = IndexTree.solutionTreeNodeMap.get( nodeID);
-        NodeAttachment parent = thisNode.parentData;
-        while (parent !=null) {
-            //check if right child, and get the branching instruction
-            if (parent.leftChildNodeID.equals(nodeID)){
-                cumulativeBranchingInstructions.add( parent.branchingInstructionForLeftChild);
-            }else {
-                cumulativeBranchingInstructions.add( parent.branchingInstructionForRightChild);
-            }
+        numNodeLPsToSolveToArriveAtLeafs = ZERO ;
+        
+        if (leafNodesToTheLeft.size() + leafNodesToTheRight.size() > ZERO){
             
-            //climb up
-             thisNode = thisNode.parentData ; 
-             parent = thisNode.parentData;
-              
-        }
+            Map<String, Integer> uniqueNodeMap = new HashMap<String, Integer>();
+            
+            for (NodeAttachment node :  leafNodesToTheLeft) {
+                NodeAttachment thisNode = node;
+                NodeAttachment parentNode = node.parentData;
+                while (!thisNode.nodeID.equals(  nodeID)){
+                    uniqueNodeMap.put(parentNode.nodeID, ONE);
+                    thisNode = parentNode;
+                    parentNode = thisNode.parentData;
+                }
+            }
+            for (NodeAttachment node :  leafNodesToTheRight) {
+                NodeAttachment thisNode = node;
+                NodeAttachment parentNode = node.parentData;
+                while (!thisNode.nodeID.equals(  nodeID)){
+                    uniqueNodeMap.put(parentNode.nodeID, ONE);
+                    thisNode = parentNode;
+                    parentNode = thisNode.parentData;
+                }
+            }
+             
+            numNodeLPsToSolveToArriveAtLeafs =uniqueNodeMap.keySet().size();
+        } 
         
-        return cumulativeBranchingInstructions;
     }
     
 }
