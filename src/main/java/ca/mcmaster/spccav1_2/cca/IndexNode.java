@@ -5,7 +5,7 @@
  */
 package ca.mcmaster.spccav1_2.cca;
 
-import static ca.mcmaster.spccav1_2.Driver.*;
+import static ca.mcmaster.spccav1_2.Constants.*;
 import ca.mcmaster.spccav1_2.cplex.datatypes.*;
 import ca.mcmaster.spccav1_2.cplex.datatypes.NodeAttachment;
 import java.util.ArrayList;
@@ -119,14 +119,14 @@ public class IndexNode {
          
     }
     
-    public List<IndexNode> getCCATrees () {
+    public List<IndexNode> getCCANodes () {
         List<IndexNode> retval = new ArrayList<IndexNode> ();
         
         if (  this.isCCA  )         {
             retval.add(this);
         }else {
-            if (this.leftChild!=null)  retval.addAll( this.leftChild. getCCATrees());
-            if (this.rightChild!=null) retval.addAll( this.rightChild.getCCATrees() );            
+            if (this.leftChild!=null)  retval.addAll(this.leftChild.getCCANodes());
+            if (this.rightChild!=null) retval.addAll(this.rightChild.getCCANodes() );            
         }
          
         return retval;

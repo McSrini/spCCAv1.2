@@ -5,6 +5,13 @@
  */
 package ca.mcmaster.spccav1_2;
 
+import static ca.mcmaster.spccav1_2.Constants.BILLION;
+import static ca.mcmaster.spccav1_2.Constants.FARMING_PHASE;
+import static ca.mcmaster.spccav1_2.Constants.LOG_FILE_EXTENSION;
+import static ca.mcmaster.spccav1_2.Constants.*;
+import static ca.mcmaster.spccav1_2.Constants.MPS_FILE_ON_DISK;
+import static ca.mcmaster.spccav1_2.Constants.ONE;
+import static ca.mcmaster.spccav1_2.Constants.ZERO;
 import ca.mcmaster.spccav1_2.cca.IndexNode;
 import ca.mcmaster.spccav1_2.cplex.ActiveSubtree;
 import ca.mcmaster.spccav1_2.cplex.datatypes.BranchingInstruction;
@@ -12,8 +19,6 @@ import ilog.cplex.IloCplex;
 import java.io.File;
 import static java.lang.System.exit;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,49 +31,26 @@ import org.apache.log4j.RollingFileAppender;
  *
  * @author tamvadss
  */
-public class Driver {
+public class TestCCANodeGenerationWithA1C1S1 {
     
     private static  Logger logger = null;
-        
-    public static final String EMPTY_STRING ="";
-    public static final int ZERO = 0;
-    public static final int ONE = 1;
-    public static final int TWO = 2;    
-    public static final int TEN = 10;  
-    public static final int SIXTY = 60;  
-    public static final int BILLION = 1000000000;
-    
-    public static final String MPS_FILE_ON_DISK =  "F:\\temporary files here\\a1c1s1.mps";
-    public static final String LOG_FOLDER="F:\\temporary files here\\logs\\testing\\";
-    public static final String LOG_FILE_EXTENSION = ".log";
-    
-    public static boolean FARMING_PHASE= true;
-    public static final boolean IS_MAXIMIZATION = false;
-    
-    //CCA represents this many nodes
-    public static   int NUM_LEAFS_FOR_MIGRATION_IN_CCA_SUBTREE  =  4; 
-    
-    //for testing, grow the tree this big
-    public static final int TOTAL_LEAFS_IN_SOLUTION_TREE =  18 ;
-    
-    //CCA subtree allowed to have slightly less good leafs than expected 
-    public static final double CCA_TOLERANCE_FRACTION =  0.1;
-        
+       
     public static void main(String[] args) throws Exception {
      
-        logger=Logger.getLogger(Driver.class);
+        logger=Logger.getLogger(Constants.class);
         logger.setLevel(Level.DEBUG);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
         try {
-            logger.addAppender(new  RollingFileAppender(layout,LOG_FOLDER+Driver.class.getSimpleName()+ LOG_FILE_EXTENSION));
+            logger.addAppender(new  RollingFileAppender(layout,LOG_FOLDER+Constants.class.getSimpleName()+ LOG_FILE_EXTENSION));
             logger.setAdditivity(false);
         } catch (Exception ex) {
             exit(1);
         }
         
+        BackTrack= true;
         IloCplex cplex= new IloCplex();   
         cplex.importModel(MPS_FILE_ON_DISK);
-        ActiveSubtree activeSubtree = new ActiveSubtree(cplex, null, null) ;
+        ActiveSubtree activeSubtree = new ActiveSubtree(cplex, null) ;
         
         /*
         FARMING_PHASE= false;
@@ -109,14 +91,13 @@ public class Driver {
         
         IndexNode  selectedCCANode = ccaNodes.get(ONE);
         logger.info("Selected CCA Node is  - " + selectedCCANode);
-        activeSubtree.selectCCANode(selectedCCANode);
+        activeSubtree.pruneCCANode(selectedCCANode);
         
         //construct new active subtree from cca node
         IloCplex cplexNew= new IloCplex();   
         cplexNew.importModel(MPS_FILE_ON_DISK);
         //cplexNew.exportModel("F:\\temporary files here\\logs\\testing\\msc98-ip.lp");
-        ActiveSubtree activeSubtreeNew = new ActiveSubtree(cplexNew, getLowerBounds(selectedCCANode.cumulativeBranchingInstructions) , 
-                getUpperBounds(selectedCCANode.cumulativeBranchingInstructions)  ) ;
+        ActiveSubtree activeSubtreeNew = new ActiveSubtree(cplexNew, selectedCCANode  ) ;
         // cplexNew.exportModel("F:\\temporary files here\\logs\\testing\\msc98-ip.node65.lp");
         
         //loop solve both sub trees
@@ -161,57 +142,7 @@ public class Driver {
            
     }
     
-        
-    public static Map< String, Double >   getUpperBounds   (List <BranchingInstruction> cumulativeBranchingInstructions) {
-        Map< String, Double > upperBounds = new HashMap < String, Double > ();
-        
-        for (BranchingInstruction bi: cumulativeBranchingInstructions){
-            
-            for (int index = ZERO ; index < bi.size(); index ++){
-                if ( bi.isBranchDirectionDown.get(index)){
-                    
-                    logger.info("Upper bound Branching instruction is: " + bi);
-            
-                    String varName = bi.varNames.get(index);
-                    double value = bi.varBounds.get(index);
-                    if (upperBounds.containsKey(varName)) {
-                        double existingValue = upperBounds.get( varName);
-                        if (existingValue>value ) upperBounds.put(varName, value);
-                    } else {
-                        upperBounds.put(varName, value);
-                    }
-                }
-            }
-        }
-        
-        return  upperBounds ;
-    }
-
-    public static Map< String, Double >   getLowerBounds   (List <BranchingInstruction> cumulativeBranchingInstructions) {
-        Map< String, Double > upperBounds = new HashMap < String, Double > ();
-        
-        for (BranchingInstruction bi: cumulativeBranchingInstructions){            
-            
-            for (int index = ZERO ; index < bi.size(); index ++){
-                if ( ! bi.isBranchDirectionDown.get(index)){
-                    
-                    logger.info("Lower bound Branching instruction is: " + bi);
-                    
-                    String varName = bi.varNames.get(index);
-                    double value = bi.varBounds.get(index);
-                    if (upperBounds.containsKey(varName)) {
-                        double existingValue = upperBounds.get( varName);
-                        if (existingValue<value ) upperBounds.put(varName, value);
-                    } else {
-                        upperBounds.put(varName, value);
-                    }
-                }
-            }            
-        }
-        
-        return  upperBounds ;
-    }
-
+    
     private static boolean isHaltFilePresent (){
         File file = new File("F:\\temporary files here\\haltfile.txt");
          

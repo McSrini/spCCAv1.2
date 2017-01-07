@@ -5,7 +5,7 @@
  */
 package ca.mcmaster.spccav1_2.cplex.callbacks;
     
-import static ca.mcmaster.spccav1_2.Driver.*;
+import static ca.mcmaster.spccav1_2.Constants.*;
 import ca.mcmaster.spccav1_2.cca.IndexTree;
 import ca.mcmaster.spccav1_2.cplex.datatypes.*;
 import ilog.concert.IloException;
@@ -29,8 +29,7 @@ public class NodeHandler extends NodeCallback {
     public long numNodesSolved = ZERO;
     public long activeLeafCount=ONE;
     
-    public IndexTree indexTree;
-    
+    public IndexTree indexTree;    
       
     static {
         logger.setLevel(Level.OFF);

@@ -5,8 +5,8 @@
  */
 package ca.mcmaster.spccav1_2.cca;
 
-import static ca.mcmaster.spccav1_2.Driver.*;
-import static ca.mcmaster.spccav1_2.Driver.ZERO;
+import static ca.mcmaster.spccav1_2.Constants.*;
+import static ca.mcmaster.spccav1_2.Constants.ZERO;
 import ca.mcmaster.spccav1_2.cplex.callbacks.BranchHandler;
 import ca.mcmaster.spccav1_2.cplex.datatypes.BranchingInstruction;
 import ca.mcmaster.spccav1_2.cplex.datatypes.NodeAttachment;
@@ -62,9 +62,7 @@ public class IndexTree {
     
     //return the CCA subtrees found  
     public List<IndexNode> getCCANodes () {
-        List<IndexNode> ccaList =  this.subtreeRoot.getCCATrees();
-         
-        return ccaList;
+        return this.subtreeRoot.getCCANodes();          
     }
     
     //find the CCA node by climbing up from every leaf.
@@ -109,13 +107,16 @@ public class IndexTree {
         return getIndexNodeFromNodeAttachment(ccaNode) ;
     }
     
-        
     public static List<BranchingInstruction> getCumulativeBranchingInstructions(String nodeID){
+        return getCumulativeBranchingInstructions(nodeID, MINUS_ONE_STRING);//ALL THE WAY TO subtree ROOT
+    }
+    
+    public static List<BranchingInstruction> getCumulativeBranchingInstructions(String nodeID, String fromNode){
         List<BranchingInstruction> cumulativeBranchingInstructions = new ArrayList<BranchingInstruction>  ();
         
         NodeAttachment thisNode = IndexTree.solutionTreeNodeMap.get( nodeID);
         NodeAttachment parent = thisNode.parentData;
-        while (parent !=null) {
+        while (parent !=null && !thisNode.nodeID.equals(fromNode)) {
             //check if right child, and get the branching instruction
             if (parent.leftChildNodeID.equals(nodeID)){
                 cumulativeBranchingInstructions.add( parent.branchingInstructionForLeftChild);
@@ -124,8 +125,8 @@ public class IndexTree {
             }
             
             //climb up
-             thisNode = thisNode.parentData ; 
-             parent = thisNode.parentData;
+            thisNode = thisNode.parentData ; 
+            parent = thisNode.parentData;
               
         }
         

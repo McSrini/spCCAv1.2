@@ -5,7 +5,7 @@
  */
 package ca.mcmaster.spccav1_2.cplex.datatypes;
  
-import static ca.mcmaster.spccav1_2.Driver.*;
+import static ca.mcmaster.spccav1_2.Constants.*;
 import java.util.*;
 
 /**

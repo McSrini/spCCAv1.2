@@ -5,7 +5,7 @@
  */
 package ca.mcmaster.spccav1_2.cplex.callbacks;
  
-import static ca.mcmaster.spccav1_2.Driver.*;
+import static ca.mcmaster.spccav1_2.Constants.*;
 import ca.mcmaster.spccav1_2.cplex.datatypes.*;
 import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
@@ -27,7 +27,7 @@ import org.apache.log4j.RollingFileAppender;
 public class BranchHandler extends BranchCallback {
     
     private static Logger logger=Logger.getLogger(BranchHandler.class);
-    private static Random rand = new Random(ONE) ;    
+     
     
     public List<String> pruneList = new ArrayList<String>();
     
@@ -86,7 +86,7 @@ public class BranchHandler extends BranchCallback {
                     //apply the bound changes specific to this child
                     BranchingInstruction bi = createBranchingInstruction(   dirs[childNum], bounds[childNum], vars[childNum] );
                     
-                    NodeAttachment thisChild  =  createChildNode( nodeData, bi, childNum ); 
+                    NodeAttachment thisChild  =  createChildNode( nodeData,   childNum ); 
 
                     IloCplex.NodeId nodeid = makeBranch(childNum,thisChild );
                     thisChild.nodeID =nodeid.toString();
@@ -117,7 +117,7 @@ public class BranchHandler extends BranchCallback {
         return new  BranchingInstruction(  getVarnames (  vars),   getVarDirs(dirs),   bounds);
     }
     
-    private NodeAttachment createChildNode (NodeAttachment parentNodeData, BranchingInstruction bi ,int childNum ){
+    private NodeAttachment createChildNode (NodeAttachment parentNodeData,int childNum ){
         NodeAttachment thisChild  = new NodeAttachment (); 
         
         thisChild.parentData = parentNodeData;

@@ -5,7 +5,8 @@
  */
 package ca.mcmaster.spccav1_2.cplex.datatypes;
 
-import static ca.mcmaster.spccav1_2.Driver.*;
+import static ca.mcmaster.spccav1_2.Constants.*;
+import ca.mcmaster.spccav1_2.controlledBranching.CBMetrics;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,7 +36,8 @@ public class NodeAttachment {
     //0 indicates L, which is the 0th child created by the branch handler, 1 indicares R i.e the 1st child
     public List<Boolean> isRightChildCumulative = new ArrayList <Boolean>();
                         
-    //
+    //these metrics are used and cleared by controlled branching, when CB is invoked
+    public CBMetrics cbMetrics = new CBMetrics();
  
     public String toString(){
         String result = EMPTY_STRING;
