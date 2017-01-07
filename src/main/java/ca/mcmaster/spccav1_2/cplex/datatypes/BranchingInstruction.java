@@ -48,12 +48,12 @@ public class BranchingInstruction {
         }
     }
     
-    public void merge (BranchingInstruction instructionOne) {
-        varNames.addAll(instructionOne.varNames);
+    public void merge (BranchingInstruction anotherInstruction) {
+        varNames.addAll(anotherInstruction.varNames);
         
-        isBranchDirectionDown.addAll( instructionOne.isBranchDirectionDown);
+        isBranchDirectionDown.addAll( anotherInstruction.isBranchDirectionDown);
         
-        varBounds.addAll(instructionOne.varBounds );
+        varBounds.addAll(anotherInstruction.varBounds );
         
     }
      

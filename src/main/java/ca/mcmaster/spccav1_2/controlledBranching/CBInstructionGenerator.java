@@ -234,8 +234,9 @@ public class CBInstructionGenerator {
     }
     
     private  BranchingInstruction mergeBranchingInstructions(List <BranchingInstruction> cumulativeBranchingInstructions ) {
-        BranchingInstruction result = cumulativeBranchingInstructions.get(ZERO);
-        for (int index = ONE; index < cumulativeBranchingInstructions.size() ; index ++) {
+        BranchingInstruction result = new BranchingInstruction ();
+                
+        for (int index = ZERO; index < cumulativeBranchingInstructions.size() ; index ++) {
             result.merge(  cumulativeBranchingInstructions.get(index));
         }
         return result;

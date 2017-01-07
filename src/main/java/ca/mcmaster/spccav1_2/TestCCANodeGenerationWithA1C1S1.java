@@ -87,14 +87,21 @@ public class TestCCANodeGenerationWithA1C1S1 {
         }
         
         
-        List <String > nodesChosenForfarming = Arrays.asList("Node19", "Node27" , "Node20" );
+        //List <String > nodesChosenForfarming = Arrays.asList("Node19", "Node27" , "Node20" );
+        List <String > nodesChosenForfarming = Arrays.asList("Node14", "Node32" , "Node34" );
+      
         IndexNode testNode = activeSubtree.getCCANode( nodesChosenForfarming) ;
         logger.info(testNode);
         
         CBInstructionGenerator instructionGenerator= new CBInstructionGenerator(testNode);
         BranchingInstructionTree instructionTree = instructionGenerator.getBranchingInstructionTree(  nodesChosenForfarming,   true);
         
-        logger.info("Instruction tree \n" + instructionTree);
+        logger.info("\nInstruction tree \n" + instructionTree);
+        
+        instructionGenerator= new CBInstructionGenerator(testNode);
+        instructionTree = instructionGenerator.getBranchingInstructionTree(  nodesChosenForfarming,   false);
+        
+        logger.info("\nInstruction tree full\n" + instructionTree);
         
         exit(5);
          

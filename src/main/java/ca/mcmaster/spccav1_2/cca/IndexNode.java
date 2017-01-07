@@ -112,9 +112,7 @@ public class IndexNode {
             //if marked CCA, populate cumulative branching instructions needed to create this CCA node
             if (isCCA) {
                 //populate cumulative branching instructions
-                if (this.nodeID.equals("Node4")){
-                    int rrr = 0 ;
-                }
+                
                 this.cumulativeBranchingInstructions= IndexTree.getCumulativeBranchingInstructions(this.nodeID)  ;
                 this.setNumberOfNodeLPsRequiredToConstructAllLeafs();
             }
