@@ -118,7 +118,7 @@ public class IndexTree {
         NodeAttachment parent = thisNode.parentData;
         while (parent !=null && !thisNode.nodeID.equals(fromNode)) {
             //check if right child, and get the branching instruction
-            if (parent.leftChildNodeID.equals(nodeID)){
+            if (parent.leftChildNodeID.equals(thisNode.nodeID )){
                 cumulativeBranchingInstructions.add( parent.branchingInstructionForLeftChild);
             }else {
                 cumulativeBranchingInstructions.add( parent.branchingInstructionForRightChild);

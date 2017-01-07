@@ -13,12 +13,15 @@ import static ca.mcmaster.spccav1_2.Constants.MPS_FILE_ON_DISK;
 import static ca.mcmaster.spccav1_2.Constants.ONE;
 import static ca.mcmaster.spccav1_2.Constants.ZERO;
 import ca.mcmaster.spccav1_2.cca.IndexNode;
+import ca.mcmaster.spccav1_2.controlledBranching.BranchingInstructionTree;
+import ca.mcmaster.spccav1_2.controlledBranching.CBInstructionGenerator;
 import ca.mcmaster.spccav1_2.cplex.ActiveSubtree;
 import ca.mcmaster.spccav1_2.cplex.datatypes.BranchingInstruction;
 import ilog.cplex.IloCplex;
 import java.io.File;
 import static java.lang.System.exit;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,17 +40,21 @@ public class TestCCANodeGenerationWithA1C1S1 {
        
     public static void main(String[] args) throws Exception {
      
-        logger=Logger.getLogger(Constants.class);
+        logger=Logger.getLogger(TestCCANodeGenerationWithA1C1S1.class);
         logger.setLevel(Level.DEBUG);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
         try {
-            logger.addAppender(new  RollingFileAppender(layout,LOG_FOLDER+Constants.class.getSimpleName()+ LOG_FILE_EXTENSION));
+            logger.addAppender(new  RollingFileAppender(layout,LOG_FOLDER+TestCCANodeGenerationWithA1C1S1.class.getSimpleName()+ LOG_FILE_EXTENSION));
             logger.setAdditivity(false);
         } catch (Exception ex) {
             exit(1);
         }
         
+        
+        
         BackTrack= true;
+        
+        
         IloCplex cplex= new IloCplex();   
         cplex.importModel(MPS_FILE_ON_DISK);
         ActiveSubtree activeSubtree = new ActiveSubtree(cplex, null) ;
@@ -71,6 +78,7 @@ public class TestCCANodeGenerationWithA1C1S1 {
          
         exit(2);*/
          
+        //solve and farm few nodes out
         activeSubtree.solve();
         List<IndexNode> ccaNodes = activeSubtree.getCCANodes();
           
@@ -79,11 +87,17 @@ public class TestCCANodeGenerationWithA1C1S1 {
         }
         
         
-        /*
-        IndexNode testNode = activeSubtree.getCCANode( Arrays.asList("Node14", "Node33" )) ;
+        List <String > nodesChosenForfarming = Arrays.asList("Node19", "Node27" , "Node20" );
+        IndexNode testNode = activeSubtree.getCCANode( nodesChosenForfarming) ;
         logger.info(testNode);
+        
+        CBInstructionGenerator instructionGenerator= new CBInstructionGenerator(testNode);
+        BranchingInstructionTree instructionTree = instructionGenerator.getBranchingInstructionTree(  nodesChosenForfarming,   true);
+        
+        logger.info("Instruction tree \n" + instructionTree);
+        
         exit(5);
-        */
+         
                 
         //select 1 CCA, and continue solution
         
@@ -102,7 +116,7 @@ public class TestCCANodeGenerationWithA1C1S1 {
         
         //loop solve both sub trees
         logger.info("Starting full solve at " + LocalDateTime.now());
-        double cutoff =  BILLION;
+        double cutoff =  IS_MAXIMIZATION ? -BILLION:BILLION;
         while (! isHaltFilePresent()){
             
             cutoff = Math.min ( cutoff, Math.min(activeSubtreeNew.getSolution(), activeSubtree.getSolution()));

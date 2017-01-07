@@ -5,6 +5,7 @@
  */
 package ca.mcmaster.spccav1_2.controlledBranching;
 
+import static ca.mcmaster.spccav1_2.Constants.EMPTY_STRING;
 import static ca.mcmaster.spccav1_2.Constants.ZERO;
 import ca.mcmaster.spccav1_2.cplex.datatypes.BranchingInstruction;
 import java.util.*;
@@ -37,5 +38,18 @@ public class BranchingInstructionNode {
     
     public boolean isLeaf() {
         return branchingInstructionList.size()==ZERO;
+    }
+    
+    public String toString(){
+        String result = EMPTY_STRING;
+        
+        result+= " BINode id " + nodeID;
+        
+        for (int index = ZERO ; index <branchingInstructionList.size(); index++ ) {
+            result+="\n";
+            result+="Child " + childList.get(index) + " instructions "+ branchingInstructionList.get(index);
+        }
+        
+        return result;
     }
 }

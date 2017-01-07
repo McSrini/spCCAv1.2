@@ -58,17 +58,8 @@ public class BranchingInstructionTree {
         logger.info("Branching Instruction Tree ");
         for (Map.Entry  <String, BranchingInstructionNode> entry : nodeMap.entrySet()){
             BranchingInstructionNode bin = entry.getValue();
-            String cid1=null, cid2= null;
-            result+=(" \n node id= "+bin.nodeID);
-            if (bin.childList.size()>ZERO){
-                cid1=bin.childList.get(ZERO).nodeID;
-                  result+=(" child1 id= "+cid1);
-            }
-            if (bin.childList.size()>ONE){
-                cid2=bin.childList.get(ONE).nodeID;
-                 result+=(" child2 id = "+cid2);
-            }
-            
+            result += bin;        
+             result += "\n";
         }
         return result;
     }

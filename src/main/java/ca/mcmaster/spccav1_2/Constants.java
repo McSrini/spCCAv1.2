@@ -39,7 +39,7 @@ public class Constants {
     public static final int SIXTY = 60;  
     public static final int BILLION = 1000000000;
     
-    public static final String MPS_FILE_ON_DISK =  "F:\\temporary files here\\a1c1s1.mps";
+    public static  String MPS_FILE_ON_DISK =  "F:\\temporary files here\\a1c1s1.mps";
     public static final String LOG_FOLDER="F:\\temporary files here\\logs\\testing\\";
     public static final String LOG_FILE_EXTENSION = ".log";
     

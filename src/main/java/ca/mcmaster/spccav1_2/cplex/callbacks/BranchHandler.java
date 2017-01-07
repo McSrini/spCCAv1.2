@@ -37,7 +37,7 @@ public class BranchHandler extends BranchCallback {
     public int numBranches = ZERO;
     
     static {
-        logger.setLevel(Level.OFF);
+        logger.setLevel(Level.DEBUG);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
         try {
             logger.addAppender(new  RollingFileAppender(layout,LOG_FOLDER+BranchHandler.class.getSimpleName()+ LOG_FILE_EXTENSION));

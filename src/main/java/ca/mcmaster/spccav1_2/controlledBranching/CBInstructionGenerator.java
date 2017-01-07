@@ -105,6 +105,7 @@ public class CBInstructionGenerator {
                                              new BranchingInstructionNode( rightChildNodeID),   
                                              mergeBranchingInstructions(IndexTree.getCumulativeBranchingInstructions( rightChildNodeID , subtreeRoot.nodeID )));
             }
+            /*
             if(leftSideSize==TWO){
                 //create left child
                 String leftChildNodeID=subtreeRoot.cbMetrics.chosenLeafsThatAreLeftDescendants.get(ZERO);
@@ -128,7 +129,7 @@ public class CBInstructionGenerator {
                 instructionTree.createChild( subtreeRoot.nodeID, 
                                              new BranchingInstructionNode( rightChildNodeID),   
                                              mergeBranchingInstructions(IndexTree.getCumulativeBranchingInstructions( rightChildNodeID , subtreeRoot.nodeID )));
-            }
+            }*/
         }else if (rightSideSize==ONE) {
                 //create right child
                 String rightChildNodeID=subtreeRoot.cbMetrics.chosenLeafsThatAreRightDescendants.get(ZERO);
@@ -291,10 +292,10 @@ public class CBInstructionGenerator {
                 String currentNodeID = currentNode.nodeID;
                     
                 boolean canSelfBeSkippedOver = currentNode.cbMetrics.chosenLeafsThatAreLeftDescendants.size() ==ZERO && 
-                                               currentNode.cbMetrics.chosenLeafsThatAreRightDescendants.size() > TWO;
+                                               currentNode.cbMetrics.chosenLeafsThatAreRightDescendants.size() >= TWO;
                 canSelfBeSkippedOver = canSelfBeSkippedOver ||  
                                        (currentNode.cbMetrics. chosenLeafsThatAreRightDescendants .size() ==ZERO && 
-                                       currentNode.cbMetrics.chosenLeafsThatAreLeftDescendants.size() > TWO);
+                                       currentNode.cbMetrics.chosenLeafsThatAreLeftDescendants.size() >= TWO);
 
                 Boolean amITheLeftChild = parentNode.leftChildNodeID.equals(currentNodeID );
 

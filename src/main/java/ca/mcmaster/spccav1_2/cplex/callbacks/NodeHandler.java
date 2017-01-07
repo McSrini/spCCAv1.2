@@ -32,7 +32,7 @@ public class NodeHandler extends NodeCallback {
     public IndexTree indexTree;    
       
     static {
-        logger.setLevel(Level.OFF);
+        logger.setLevel(Level.DEBUG);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
         try {
             logger.addAppender(new  RollingFileAppender(layout,LOG_FOLDER+NodeHandler.class.getSimpleName()+ LOG_FILE_EXTENSION));

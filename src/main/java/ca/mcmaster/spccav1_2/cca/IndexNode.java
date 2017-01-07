@@ -112,6 +112,9 @@ public class IndexNode {
             //if marked CCA, populate cumulative branching instructions needed to create this CCA node
             if (isCCA) {
                 //populate cumulative branching instructions
+                if (this.nodeID.equals("Node4")){
+                    int rrr = 0 ;
+                }
                 this.cumulativeBranchingInstructions= IndexTree.getCumulativeBranchingInstructions(this.nodeID)  ;
                 this.setNumberOfNodeLPsRequiredToConstructAllLeafs();
             }
@@ -159,8 +162,14 @@ public class IndexNode {
         for (NodeAttachment leafNode  : this.leafNodesToTheRight){
             result+=leafNode.nodeID+" ";
         }
-        result+= ")\n";
+        result+= ")\n Branching instructions\n";
         
+        for (BranchingInstruction bi : this.cumulativeBranchingInstructions){
+            result+= bi.toString() + " ";
+        }
+        
+        result+= "\n LP solves needed =" + this.numNodeLPsToSolveToArriveAtLeafs;
+         result+= "\n";
         return result;
     }
     
