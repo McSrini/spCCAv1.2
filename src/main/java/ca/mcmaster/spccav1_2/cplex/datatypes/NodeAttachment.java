@@ -49,6 +49,16 @@ public class NodeAttachment {
         }
           
         result += "\n";
+        
+        if (leftChildNodeID!=null) {
+            result += branchingInstructionForLeftChild;
+            result += "\n";
+        }
+        if (rightChildNodeID!=null){
+            result +=branchingInstructionForRightChild;
+            result += "\n";
+        }
+        
         return result;
     }
     

@@ -17,10 +17,12 @@ import ca.mcmaster.spccav1_2.controlledBranching.BranchingInstructionTree;
 import ca.mcmaster.spccav1_2.controlledBranching.CBInstructionGenerator;
 import ca.mcmaster.spccav1_2.cplex.ActiveSubtree;
 import ca.mcmaster.spccav1_2.cplex.datatypes.BranchingInstruction;
+import ca.mcmaster.spccav1_2.cplex.datatypes.NodeAttachment;
 import ilog.cplex.IloCplex;
 import java.io.File;
 import static java.lang.System.exit;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -34,25 +36,28 @@ import org.apache.log4j.RollingFileAppender;
  *
  * @author tamvadss
  */
-public class TestCCANodeGenerationWithA1C1S1 {
+public class TestCCANodeGenerationWithRDPLU {
     
     private static  Logger logger = null;
        
     public static void main(String[] args) throws Exception {
      
-        logger=Logger.getLogger(TestCCANodeGenerationWithA1C1S1.class);
+        logger=Logger.getLogger(TestCCANodeGenerationWithRDPLU.class);
         logger.setLevel(Level.DEBUG);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
         try {
-            logger.addAppender(new  RollingFileAppender(layout,LOG_FOLDER+TestCCANodeGenerationWithA1C1S1.class.getSimpleName()+ LOG_FILE_EXTENSION));
+            logger.addAppender(new  RollingFileAppender(layout,LOG_FOLDER+TestCCANodeGenerationWithRDPLU.class.getSimpleName()+ LOG_FILE_EXTENSION));
             logger.setAdditivity(false);
         } catch (Exception ex) {
             exit(1);
         }
         
+        MPS_FILE_ON_DISK=   "F:\\temporary files here\\rd-rplusc-21.mps";
         
         
-        BackTrack= true;
+        NUM_LEAFS_FOR_MIGRATION_IN_CCA_SUBTREE  =  40; 
+        TOTAL_LEAFS_IN_SOLUTION_TREE =  180 ;
+         
         
         
         IloCplex cplex= new IloCplex();   
@@ -81,28 +86,25 @@ public class TestCCANodeGenerationWithA1C1S1 {
         //solve and farm few nodes out
         activeSubtree.solve();
         List<IndexNode> ccaNodes = activeSubtree.getCCANodes();
-          
-        for (IndexNode node: ccaNodes){
-            logger.info(node);
+           
+        
+        CBInstructionGenerator instructionGenerator= new CBInstructionGenerator(ccaNodes.get(ZERO));
+        
+        List <String > nodesChosenForfarming = new ArrayList <String >();
+        for (NodeAttachment atch : ccaNodes.get(ZERO).leafNodesToTheLeft) {
+            nodesChosenForfarming.add (    atch.nodeID    );
         }
+        for (NodeAttachment atch : ccaNodes.get(ZERO).leafNodesToTheRight){
+            nodesChosenForfarming.add (    atch.nodeID    );
+        }     
         
-        
-        //List <String > nodesChosenForfarming = Arrays.asList("Node19", "Node27" , "Node20" );
-        List <String > nodesChosenForfarming = Arrays.asList(  "Node14" , "Node33", "Node34", "Node28" );
-      
-        IndexNode testNode = activeSubtree.getCCANode( nodesChosenForfarming) ;
-        logger.info(testNode);
-        
-        CBInstructionGenerator instructionGenerator= new CBInstructionGenerator(testNode);
+        //create instruction tree only up tp CCA
         BranchingInstructionTree instructionTree = instructionGenerator.getBranchingInstructionTree(  nodesChosenForfarming,   true);
         
         logger.info("\nInstruction tree \n" + instructionTree);
         
-        instructionGenerator= new CBInstructionGenerator(testNode);
-        instructionTree = instructionGenerator.getBranchingInstructionTree(  nodesChosenForfarming,   false);
         
-        logger.info("\nInstruction tree full\n" + instructionTree);
-        
+        /*
         //re-construct the migrated nodes with controlled branching
         logger.info("\nMerging leafs into new tree  \n"  );
         IloCplex cplexMerged= new IloCplex();   
@@ -110,7 +112,8 @@ public class TestCCANodeGenerationWithA1C1S1 {
         ActiveSubtree mergedAcriveSubTree =new ActiveSubtree(cplexMerged,  instructionTree, BILLION );
         mergedAcriveSubTree.solveTillLeafsMerged();
         
-        exit(7);
+        exit(5);
+        */
          
                 
         //select 1 CCA, and continue solution
@@ -125,7 +128,7 @@ public class TestCCANodeGenerationWithA1C1S1 {
         IloCplex cplexNew= new IloCplex();   
         cplexNew.importModel(MPS_FILE_ON_DISK);
         //cplexNew.exportModel("F:\\temporary files here\\logs\\testing\\msc98-ip.lp");
-        ActiveSubtree activeSubtreeNew = new ActiveSubtree(cplexNew, selectedCCANode  ) ;
+        ActiveSubtree activeSubtreeNew = new ActiveSubtree(cplexNew,instructionTree, BILLION);
         // cplexNew.exportModel("F:\\temporary files here\\logs\\testing\\msc98-ip.node65.lp");
         
         //loop solve both sub trees
@@ -134,7 +137,7 @@ public class TestCCANodeGenerationWithA1C1S1 {
         while (! isHaltFilePresent()){
             
             cutoff = Math.min ( cutoff, Math.min(activeSubtreeNew.getSolution(), activeSubtree.getSolution()));
-            logger.info("BEST Known solution is " +cutoff);
+            logger.info("\nBEST Known solution is " +cutoff);
             
             logger.info("Initial activeSubtree best reamining obj val "+ activeSubtree.getBestObjValue() + " count of remaining leafs "+activeSubtree.getActiveLeafCount()
             + " branches "+ activeSubtree.getNumBranches()); 
@@ -147,19 +150,31 @@ public class TestCCANodeGenerationWithA1C1S1 {
             activeSubtreeNew.setUpperCutoff(cutoff) ;
             activeSubtree .setUpperCutoff(cutoff) ;
            
-            if (! activeSubtreeNew.isOptimal()) activeSubtreeNew.solveFor2Min (); else  logger.info("Completed activeSubtree new" );
+            if (! activeSubtreeNew.isOptimal() ){
+                activeSubtreeNew.solveFor2Min ();
+                logger.info("activeSubtreeNew status "+ activeSubtree.getStatus());
+            } else  logger.info("Completed activeSubtree new" );
             
-            if (!activeSubtreeNew.isFeasible() && activeSubtreeNew.getNumBranches()==ZERO){
+            
+            
+            
+            if (! activeSubtreeNew.isFeasible() && activeSubtreeNew.getNumBranches()==ZERO){
                 logger.info(" **** "+ activeSubtreeNew.getNumBranches());
                 exit(3);
             }
             
-            if (! activeSubtree.isOptimal()) activeSubtree.solveFor2Min (); else  logger.info("Completed activeSubtree");
+            if (! activeSubtree.isOptimal() ) {
+                activeSubtree.solveFor2Min ();
+                logger.info("activeSubtree status "+ activeSubtree.getStatus());
+            } else  logger.info("Completed activeSubtree");
+            
+            //must end completed active subtrees, to relase memory, see older implementations
             
             logger.info("Number of oldtree nodes solved is = "+  (activeSubtree.getNumNodesSolved()-nodeCountOldtree));
             logger.info("Number of newtree nodes solved is = "+  (activeSubtreeNew.getNumNodesSolved()-nodeCountNEwTree));
             
             if (  activeSubtreeNew.isOptimal()  && activeSubtree.isOptimal()) break;
+             
         }
        
         if (activeSubtree.isOptimal()) logger.info("M0 solution is "+activeSubtree.getSolution());

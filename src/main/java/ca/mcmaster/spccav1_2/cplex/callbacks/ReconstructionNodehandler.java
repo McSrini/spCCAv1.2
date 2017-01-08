@@ -6,6 +6,8 @@
 package ca.mcmaster.spccav1_2.cplex.callbacks;
 
 import static ca.mcmaster.spccav1_2.Constants.FARMING_PHASE;
+import static ca.mcmaster.spccav1_2.Constants.LOG_FILE_EXTENSION;
+import static ca.mcmaster.spccav1_2.Constants.LOG_FOLDER;
 import static ca.mcmaster.spccav1_2.Constants.ONE;
 import static ca.mcmaster.spccav1_2.Constants.TOTAL_LEAFS_IN_SOLUTION_TREE;
 import static ca.mcmaster.spccav1_2.Constants.ZERO;
@@ -13,16 +15,23 @@ import ca.mcmaster.spccav1_2.cca.IndexTree;
 import ca.mcmaster.spccav1_2.cplex.datatypes.NodeAttachment;
 import ilog.concert.IloException;
 import ilog.cplex.IloCplex.NodeCallback;
+import static java.lang.System.exit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
+import org.apache.log4j.RollingFileAppender;
 
 /**
  *
  * @author tamvadss
  */
 public class ReconstructionNodehandler extends NodeCallback{
+    
+    private static Logger logger=Logger.getLogger(ReconstructionNodehandler.class);
     
     private  double bestKnownSOlutionValue ;
     
@@ -32,6 +41,18 @@ public class ReconstructionNodehandler extends NodeCallback{
     private Map<String, String> oldToNewMap = new HashMap<String, String>();
     
     public IndexTree indexTree;    
+    
+    static {
+        logger.setLevel(Level.DEBUG);
+        PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
+        try {
+            logger.addAppender(new  RollingFileAppender(layout,LOG_FOLDER+ReconstructionNodehandler.class.getSimpleName()+ LOG_FILE_EXTENSION));
+            logger.setAdditivity(false);
+        } catch (Exception ex) {
+            exit(1);
+        }
+          
+    }
     
     public ReconstructionNodehandler( double bestKnownSOlutionValue, Map<String, String> newToOldMap, Map<String, String> oldToNewMap) {
         this.bestKnownSOlutionValue =    bestKnownSOlutionValue;
@@ -73,6 +94,7 @@ public class ReconstructionNodehandler extends NodeCallback{
                     //indexTree=new IndexTree(getAllLeafs());
                     
                     //stop  , migration is complete
+                    printAllLeafs();
                     abort();
                 } else {
                     //select this node
@@ -113,6 +135,15 @@ public class ReconstructionNodehandler extends NodeCallback{
           
         
         return selectedIndex;
+    }
+    
+    private void printAllLeafs () throws IloException {
+        logger.debug("\nPrinting all active leafs\n");
+        long numLeafs = getNremainingNodes64();
+        for (int index = ZERO ; index < numLeafs; index ++){
+            logger.debug((NodeAttachment)getNodeData(index));
+        }
+        
     }
     
 }

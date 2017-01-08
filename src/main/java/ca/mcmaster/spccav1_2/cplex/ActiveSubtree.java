@@ -15,6 +15,7 @@ import ca.mcmaster.spccav1_2.cplex.callbacks.*;
 import ca.mcmaster.spccav1_2.cplex.datatypes.*;
 import ilog.concert.IloException;
 import ilog.cplex.IloCplex;
+import ilog.cplex.IloCplex.Status;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -67,7 +68,7 @@ public class ActiveSubtree {
         populateNewAndOldNodeIDMaps(newToOldMap, oldToNewMap,   branchingInstructionTree);
         
         //use the reconstruction handlers until merging is complete
-        this.cplex.use(new ReconstructionBranchHandler(bestKnownSolutionValue, newToOldMap, oldToNewMap, branchingInstructionTree));
+        this.cplex.use(new ReconstructionBranchHandler(bestKnownSolutionValue, newToOldMap, oldToNewMap, branchingInstructionTree, cplex));
         this.cplex.use(new ReconstructionNodehandler(bestKnownSolutionValue, newToOldMap, oldToNewMap)); 
     }
            
@@ -166,8 +167,12 @@ public class ActiveSubtree {
         return this.cplex.getStatus().equals(IloCplex.Status.Optimal);
     }
     
-    public boolean isUnfeasible () throws IloException {
-        return this.cplex.getStatus().equals(IloCplex.Status.Infeasible);
+    public boolean isFeasible () throws IloException {
+        return this.cplex.getStatus().equals(IloCplex.Status.Feasible);
+    }
+    
+    public Status getStatus   () throws IloException {
+        return this.cplex.getStatus();
     }
     
     public long getActiveLeafCount () {
@@ -223,6 +228,10 @@ public class ActiveSubtree {
         }
         
         return  upperBounds ;
+    }
+    
+    public void export (String filename) throws IloException {
+        this.cplex.exportModel( filename);
     }
     
     // map of old  node, to new node ID, for every old node whose kids needs to be created

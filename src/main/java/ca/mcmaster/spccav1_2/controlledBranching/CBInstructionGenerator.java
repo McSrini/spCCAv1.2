@@ -90,7 +90,7 @@ public class CBInstructionGenerator {
         
         logger.debug("building Branching Instruction Tree " + subtreeRoot.nodeID);
         
-        if (leftSideSize+rightSideSize<=TWO) {
+        if (leftSideSize< TWO && rightSideSize<TWO) {
             if(leftSideSize==ONE){                 
                 //create left child
                 String leftChildNodeID=subtreeRoot.cbMetrics.chosenLeafsThatAreLeftDescendants.get(ZERO);
@@ -130,7 +130,8 @@ public class CBInstructionGenerator {
                                              new BranchingInstructionNode( rightChildNodeID),   
                                              mergeBranchingInstructions(IndexTree.getCumulativeBranchingInstructions( rightChildNodeID , subtreeRoot.nodeID )));
             }*/
-        }else if (rightSideSize==ONE) {
+        }
+        if (rightSideSize==ONE && leftSideSize>=TWO) {
                 //create right child
                 String rightChildNodeID=subtreeRoot.cbMetrics.chosenLeafsThatAreRightDescendants.get(ZERO);
                 instructionTree.createChild( subtreeRoot.nodeID, 
@@ -143,7 +144,9 @@ public class CBInstructionGenerator {
                 //recursive call
                 buildBranchingInstructionTree(  IndexTree.solutionTreeNodeMap.get( leftChildNodeID)  ,   instructionTree);
                 
-        } else if (leftSideSize==ONE) {
+        } 
+        
+        if (leftSideSize==ONE && rightSideSize>=TWO) {
                 //create left child
                 String leftChildNodeID=subtreeRoot.cbMetrics.chosenLeafsThatAreLeftDescendants.get(ZERO);
                 instructionTree.createChild( subtreeRoot.nodeID, 
@@ -156,7 +159,9 @@ public class CBInstructionGenerator {
                 //recursive call
                 buildBranchingInstructionTree(  IndexTree.solutionTreeNodeMap.get( rightChildNodeID )  ,   instructionTree);
                 
-        } else {
+        } 
+        
+        if (rightSideSize>=TWO && leftSideSize>=TWO) {
             //both side have counts   >=2
             
             //create immidiate kids on both sides, and make recursive calls on both sides. Take skipping into account.
@@ -184,7 +189,7 @@ public class CBInstructionGenerator {
         
         for (int index = ZERO;  index < subtreeRoot.cbMetrics.leftSideSkipCount; index++){
 
-            boolean isSkipDirectionLeft =  thisChild.cbMetrics.chosenLeafsThatAreRightDescendants.size()>ZERO;
+            boolean isSkipDirectionLeft =  thisChild.cbMetrics.chosenLeafsThatAreRightDescendants.size()==ZERO;
             if (isSkipDirectionLeft) {
                 //skip one node to the left
                 compoundInstr .merge(thisChild.branchingInstructionForLeftChild);
@@ -213,7 +218,7 @@ public class CBInstructionGenerator {
         
         for (int index = ZERO;  index < subtreeRoot.cbMetrics.rightSideSkipCount; index++){
 
-            boolean isSkipDirectionLeft =  thisChild.cbMetrics.chosenLeafsThatAreRightDescendants.size()>ZERO;
+            boolean isSkipDirectionLeft =  thisChild.cbMetrics.chosenLeafsThatAreRightDescendants.size()==ZERO;
             if (isSkipDirectionLeft) {
                 //skip one node to the left
                 compoundInstr .merge(thisChild.branchingInstructionForLeftChild);

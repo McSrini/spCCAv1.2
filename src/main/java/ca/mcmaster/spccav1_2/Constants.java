@@ -52,7 +52,7 @@ public class Constants {
     public static   int NUM_LEAFS_FOR_MIGRATION_IN_CCA_SUBTREE  =  4; 
     
     //for testing, grow the tree this big
-    public static final int TOTAL_LEAFS_IN_SOLUTION_TREE =  18 ;
+    public static   int TOTAL_LEAFS_IN_SOLUTION_TREE =  18 ;
     
     //CCA subtree allowed to have slightly less good leafs than expected 
     public static final double CCA_TOLERANCE_FRACTION =  0.1;

@@ -87,4 +87,14 @@ public class UtilityLibrary {
 
     }  
     
+    public static IloNumVar[] getVariablesInModel (IloCplex cplex) throws IloException {
+        IloLPMatrix lpMatrix = (IloLPMatrix)cplex.LPMatrixIterator().next();
+
+        //WARNING: we assume that every variable appears in at least 1 constraint or variable bound
+        //Otherwise, this method of getting all the variables from the matrix may not yield all the variables
+        
+        IloNumVar[] variables = lpMatrix.getNumVars();
+        return variables;
+    }
+    
 }

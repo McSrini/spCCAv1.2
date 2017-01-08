@@ -75,9 +75,9 @@ public class BranchHandler extends BranchCallback {
             }else {
                 
                 //get the branches about to be created
-                IloNumVar[][] vars = new IloNumVar[2][] ;
-                double[ ][] bounds = new double[2 ][];
-                BranchDirection[ ][]  dirs = new  IloCplex.BranchDirection[ 2][];
+                IloNumVar[][] vars = new IloNumVar[TWO][] ;
+                double[ ][] bounds = new double[TWO ][];
+                BranchDirection[ ][]  dirs = new  IloCplex.BranchDirection[ TWO][];
                 getBranches(  vars, bounds, dirs);
 
                 //now allow  both kids to spawn
@@ -92,7 +92,7 @@ public class BranchHandler extends BranchCallback {
                     thisChild.nodeID =nodeid.toString();
                     
                     logger.debug(" Node "+nodeData.nodeID + " created child "+  thisChild.nodeID + " varname " +
-                           vars[childNum][0].getName() + " bound " + bounds[childNum][0] +   (dirs[childNum][0].equals( BranchDirection.Down) ? " U":" L") ) ;
+                           vars[childNum][ZERO].getName() + " bound " + bounds[childNum][ZERO] +   (dirs[childNum][ZERO].equals( BranchDirection.Down) ? " U":" L") ) ;
                     
                     if (childNum == ZERO) {
                         //update left child info
