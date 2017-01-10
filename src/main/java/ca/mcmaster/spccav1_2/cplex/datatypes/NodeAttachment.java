@@ -38,6 +38,8 @@ public class NodeAttachment {
                         
     //these metrics are used and cleared by controlled branching, when CB is invoked
     public CBMetrics cbMetrics = new CBMetrics();
+    
+    public WarmStartInformation warmStartInfo  ;
  
     public String toString(){
         String result = EMPTY_STRING;

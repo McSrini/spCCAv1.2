@@ -105,6 +105,10 @@ public class BranchHandler extends BranchCallback {
 
                 }//end for 2 kids
                 
+                //can retain the warm start information for all the parent nodes in memory
+                //This is a blank call for now
+                nodeData.warmStartInfo = new WarmStartInformation();
+                
             }
             
             this.bestReaminingObjValue = getBestObjValue();

@@ -16,6 +16,7 @@ import ca.mcmaster.spccav1_2.controlledBranching.BranchingInstructionNode;
 import ca.mcmaster.spccav1_2.controlledBranching.BranchingInstructionTree;
 import ca.mcmaster.spccav1_2.cplex.datatypes.BranchingInstruction;
 import ca.mcmaster.spccav1_2.cplex.datatypes.NodeAttachment;
+import ca.mcmaster.spccav1_2.cplex.datatypes.WarmStartInformation;
 import ca.mcmaster.spccav1_2.cplex.utilities.UtilityLibrary;
 import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
@@ -92,7 +93,14 @@ public class ReconstructionBranchHandler extends BranchCallback{
                 prune();
             }else {
            
-                CreateChildrenAsPerInstructions(nodeData);
+                int numKids = CreateChildrenAsPerInstructions(nodeData);
+                
+                //can retain the warm start information for all the parent nodes in memory
+                //This is a blank call for now
+                nodeData.warmStartInfo = new WarmStartInformation();
+                
+                //it seems its better to prune parent if numKids ==1
+                if (numKids==ONE) prune();
             }
             
         }
@@ -101,7 +109,7 @@ public class ReconstructionBranchHandler extends BranchCallback{
     
     //create two child nodes, as per instructions for this node in the instruction Tree
     //update old to new map, and new to old map
-    private void  CreateChildrenAsPerInstructions(NodeAttachment nodeData) throws IloException{
+    private int  CreateChildrenAsPerInstructions(NodeAttachment nodeData) throws IloException{
         
         IloNumVar[][] vars = new IloNumVar[TWO][];
         double[ ][] bounds = new double[TWO ][];
@@ -131,7 +139,14 @@ public class ReconstructionBranchHandler extends BranchCallback{
                           
             thisChild.nodeID =nodeid.toString();
 
-            logger.debug(" Node "+nodeData.nodeID + " created child "+  thisChild.nodeID + " using "+ bi ) ;
+            logger.debug(" Node "+nodeData.nodeID + " created child "+  thisChild.nodeID + " using "+ bi +"\n\n") ;
+            for (int numBranchingVars = ZERO; numBranchingVars< vars[childNum].length; numBranchingVars++) {
+                logger.debug(" Node "+nodeData.nodeID + " created child "+  thisChild.nodeID + " varname " +
+                           vars[childNum][numBranchingVars].getName() + " bound " + bounds[childNum][numBranchingVars] +   
+                           (dirs[childNum][numBranchingVars].equals( BranchDirection.Down) ? " U":" L") ) ;
+                
+            }            
+              
 
             if (childNum == ZERO) {
                 //update left child info
@@ -153,7 +168,9 @@ public class ReconstructionBranchHandler extends BranchCallback{
                 logger.info(oldNodeID + " and new child id " + thisChild.nodeID) ;
             }
         
-        }//end for 2 kids          
+        }//end for 2 kids     
+        
+        return numKids;
          
     }
     

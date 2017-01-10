@@ -88,7 +88,7 @@ public class TestCCANodeGenerationWithA1C1S1 {
         
         
         //List <String > nodesChosenForfarming = Arrays.asList("Node19", "Node27" , "Node20" );
-        List <String > nodesChosenForfarming = Arrays.asList(  "Node14" , "Node33", "Node34", "Node28" );
+        List <String > nodesChosenForfarming = Arrays.asList(  "Node28" , "Node19", "Node20"  );
       
         IndexNode testNode = activeSubtree.getCCANode( nodesChosenForfarming) ;
         logger.info(testNode);

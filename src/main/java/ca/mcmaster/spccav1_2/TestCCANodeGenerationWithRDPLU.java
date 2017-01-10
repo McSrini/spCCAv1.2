@@ -46,23 +46,22 @@ public class TestCCANodeGenerationWithRDPLU {
         logger.setLevel(Level.DEBUG);
         PatternLayout layout = new PatternLayout("%5p  %d  %F  %L  %m%n");     
         try {
-            logger.addAppender(new  RollingFileAppender(layout,LOG_FOLDER+TestCCANodeGenerationWithRDPLU.class.getSimpleName()+ LOG_FILE_EXTENSION));
+            RollingFileAppender rfa = new  RollingFileAppender(layout,LOG_FOLDER+TestCCANodeGenerationWithRDPLU.class.getSimpleName()+ LOG_FILE_EXTENSION);
+            rfa.setMaxBackupIndex(TEN*TEN);
+            logger.addAppender(rfa);
             logger.setAdditivity(false);
+            
         } catch (Exception ex) {
             exit(1);
         }
         
         MPS_FILE_ON_DISK=   "F:\\temporary files here\\rd-rplusc-21.mps";
-        
-        
-        NUM_LEAFS_FOR_MIGRATION_IN_CCA_SUBTREE  =  40; 
-        TOTAL_LEAFS_IN_SOLUTION_TREE =  180 ;
          
-        
         
         IloCplex cplex= new IloCplex();   
         cplex.importModel(MPS_FILE_ON_DISK);
         ActiveSubtree activeSubtree = new ActiveSubtree(cplex, null) ;
+        
         
         /*
         FARMING_PHASE= false;
@@ -122,17 +121,20 @@ public class TestCCANodeGenerationWithRDPLU {
         
         IndexNode  selectedCCANode = ccaNodes.get(ZERO);
         logger.info("Selected CCA Node is  - " + selectedCCANode);
-        activeSubtree.pruneCCANode(selectedCCANode);
+        //activeSubtree.pruneCCANode(selectedCCANode); comment out to ensure time taken without pruning is same as monolithic solve
         
         //construct new active subtree from cca node
         IloCplex cplexNew= new IloCplex();   
         cplexNew.importModel(MPS_FILE_ON_DISK);
+        
         //cplexNew.exportModel("F:\\temporary files here\\logs\\testing\\msc98-ip.lp");
-        ActiveSubtree activeSubtreeNew = new ActiveSubtree(cplexNew,instructionTree, BILLION);
+        ActiveSubtree activeSubtreeNew = new ActiveSubtree(cplexNew,instructionTree, activeSubtree.getSolution());
         // cplexNew.exportModel("F:\\temporary files here\\logs\\testing\\msc98-ip.node65.lp");
+        activeSubtreeNew.solveTillLeafsMerged();       
+        activeSubtreeNew.setDefaultCallbacks();
         
         //loop solve both sub trees
-        logger.info("Starting full solve at " + LocalDateTime.now());
+        logger.info("\nStarting full solve at " + LocalDateTime.now());
         double cutoff =  IS_MAXIMIZATION ? -BILLION:BILLION;
         while (! isHaltFilePresent()){
             
@@ -151,6 +153,7 @@ public class TestCCANodeGenerationWithRDPLU {
             activeSubtree .setUpperCutoff(cutoff) ;
            
             if (! activeSubtreeNew.isOptimal() ){
+                logger.info("Solving new subtree ...");
                 activeSubtreeNew.solveFor2Min ();
                 logger.info("activeSubtreeNew status "+ activeSubtree.getStatus());
             } else  logger.info("Completed activeSubtree new" );
@@ -164,6 +167,7 @@ public class TestCCANodeGenerationWithRDPLU {
             }
             
             if (! activeSubtree.isOptimal() ) {
+                 logger.info("Solving old subtree ...");
                 activeSubtree.solveFor2Min ();
                 logger.info("activeSubtree status "+ activeSubtree.getStatus());
             } else  logger.info("Completed activeSubtree");
@@ -174,6 +178,9 @@ public class TestCCANodeGenerationWithRDPLU {
             logger.info("Number of newtree nodes solved is = "+  (activeSubtreeNew.getNumNodesSolved()-nodeCountNEwTree));
             
             if (  activeSubtreeNew.isOptimal()  && activeSubtree.isOptimal()) break;
+            
+            //temporaraily check
+            if ((activeSubtree.getNumNodesSolved()-nodeCountOldtree)==ZERO && (activeSubtreeNew.getNumNodesSolved()-nodeCountNEwTree)==ZERO)  break;
              
         }
        
